@@ -23,7 +23,7 @@ A Python-based project that collects weather data from Xiaomi connected home dev
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/xiaomi-weather-monitor.git
+git clone https://github.com/donivtech/xiaomi-weather-monitor.git
 cd xiaomi-weather-monitor
 ```
 
