@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-from miio import AirQualityMonitor
+from miio import AirHumidifier
 import pandas as pd
 
 # Load environment variables
@@ -22,14 +22,14 @@ def setup_data_directory():
     
     # Create CSV file with headers if it doesn't exist
     if not DATA_FILE.exists():
-        df = pd.DataFrame(columns=['timestamp', 'temperature', 'humidity', 'pressure', 'aqi'])
+        df = pd.DataFrame(columns=['timestamp', 'temperature', 'humidity', 'mode', 'target_humidity'])
         df.to_csv(DATA_FILE, index=False)
 
 def collect_data():
     """Collect data from Xiaomi device and save to CSV."""
     try:
         # Initialize device
-        device = AirQualityMonitor(DEVICE_IP, DEVICE_TOKEN)
+        device = AirHumidifier(DEVICE_IP, DEVICE_TOKEN)
         
         # Get sensor data
         data = device.status()
@@ -39,8 +39,8 @@ def collect_data():
             'timestamp': datetime.now().isoformat(),
             'temperature': data.temperature,
             'humidity': data.humidity,
-            'pressure': data.pressure,
-            'aqi': data.aqi
+            'mode': data.mode.name,
+            'target_humidity': data.target_humidity
         }
         
         # Append to CSV

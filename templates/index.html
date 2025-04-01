@@ -33,14 +33,17 @@
         <div class="latest-readings card p-3">
             <h3>Latest Readings</h3>
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <p>Temperature: <span class="reading-value">{{ "%.1f"|format(latest.temperature) }}°C</span></p>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <p>Humidity: <span class="reading-value">{{ "%.1f"|format(latest.humidity) }}%</span></p>
                 </div>
-                <div class="col-md-4">
-                    <p>Pressure: <span class="reading-value">{{ "%.1f"|format(latest.pressure) }} hPa</span></p>
+                <div class="col-md-3">
+                    <p>Target Humidity: <span class="reading-value">{{ "%.1f"|format(latest.target_humidity) }}%</span></p>
+                </div>
+                <div class="col-md-3">
+                    <p>Mode: <span class="reading-value">{{ latest.mode }}</span></p>
                 </div>
             </div>
             <p class="text-muted">Last updated: {{ latest.timestamp }}</p>
@@ -58,17 +61,17 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-8">
                 <div class="card">
                     <div class="card-body">
                         {{ humidity_plot | safe }}
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        {{ pressure_plot | safe }}
+                        {{ mode_plot | safe }}
                     </div>
                 </div>
             </div>

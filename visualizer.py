@@ -45,7 +45,14 @@ def create_humidity_plot(df):
         x=df['timestamp'],
         y=df['humidity'],
         mode='lines+markers',
-        name='Humidity (%)'
+        name='Current Humidity (%)'
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=df['timestamp'],
+        y=df['target_humidity'],
+        mode='lines+markers',
+        name='Target Humidity (%)'
     ))
     
     fig.update_layout(
@@ -57,21 +64,25 @@ def create_humidity_plot(df):
     
     return fig.to_html(full_html=False)
 
-def create_pressure_plot(df):
-    """Create pressure visualization."""
+def create_mode_plot(df):
+    """Create mode visualization."""
     fig = go.Figure()
     
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'],
-        y=df['pressure'],
-        mode='lines+markers',
-        name='Pressure (hPa)'
-    ))
+    # Count modes over time
+    mode_counts = df.groupby(['timestamp', 'mode']).size().unstack(fill_value=0)
+    
+    for mode in mode_counts.columns:
+        fig.add_trace(go.Scatter(
+            x=mode_counts.index,
+            y=mode_counts[mode],
+            mode='lines+markers',
+            name=mode
+        ))
     
     fig.update_layout(
-        title='Pressure Over Time',
+        title='Device Mode Over Time',
         xaxis_title='Time',
-        yaxis_title='Pressure (hPa)',
+        yaxis_title='Count',
         template='plotly_dark'
     )
     
@@ -88,13 +99,13 @@ def index():
     # Create visualizations
     temp_plot = create_temperature_plot(df)
     humidity_plot = create_humidity_plot(df)
-    pressure_plot = create_pressure_plot(df)
+    mode_plot = create_mode_plot(df)
     
     return render_template('index.html',
                          latest=latest,
                          temp_plot=temp_plot,
                          humidity_plot=humidity_plot,
-                         pressure_plot=pressure_plot)
+                         mode_plot=mode_plot)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True) 
