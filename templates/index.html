@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xiaomi Weather Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .card {
+            background-color: #2d2d2d;
+            border: none;
+            margin-bottom: 20px;
+        }
+        .latest-readings {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        .reading-value {
+            font-weight: bold;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <h1 class="text-center mb-4">Xiaomi Weather Monitor</h1>
+        
+        {% if latest %}
+        <div class="latest-readings card p-3">
+            <h3>Latest Readings</h3>
+            <div class="row">
+                <div class="col-md-4">
+                    <p>Temperature: <span class="reading-value">{{ "%.1f"|format(latest.temperature) }}°C</span></p>
+                </div>
+                <div class="col-md-4">
+                    <p>Humidity: <span class="reading-value">{{ "%.1f"|format(latest.humidity) }}%</span></p>
+                </div>
+                <div class="col-md-4">
+                    <p>Pressure: <span class="reading-value">{{ "%.1f"|format(latest.pressure) }} hPa</span></p>
+                </div>
+            </div>
+            <p class="text-muted">Last updated: {{ latest.timestamp }}</p>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        {{ temp_plot | safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        {{ humidity_plot | safe }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        {{ pressure_plot | safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
