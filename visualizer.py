@@ -1,111 +1,101 @@
 from flask import Flask, render_template
 import pandas as pd
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
 from pathlib import Path
+import json
 
 app = Flask(__name__)
-DATA_FILE = Path('data/weather_data.csv')
+
+# Configuration
+DATA_DIR = Path('data')
+DATA_FILE = DATA_DIR / 'weather_data.csv'
 
 def load_data():
-    """Load and process the weather data."""
+    """Load data from CSV file."""
     try:
-        df = pd.read_csv(DATA_FILE)
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df = pd.read_csv('data/weather_data.csv')
+        print(f"\nData loaded successfully:")
+        print(f"Number of rows: {len(df)}")
+        print(f"Columns: {df.columns.tolist()}")
+        print(f"Data range: {df['timestamp'].min()} to {df['timestamp'].max()}")
+        print("\nSample data:")
+        print(df.head())
+        print("\nData types:")
+        print(df.dtypes)
         return df
     except Exception as e:
         print(f"Error loading data: {e}")
         return pd.DataFrame()
 
-def create_temperature_plot(df):
-    """Create temperature visualization."""
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'],
-        y=df['temperature'],
-        mode='lines+markers',
-        name='Temperature (°C)'
-    ))
-    
-    fig.update_layout(
-        title='Temperature Over Time',
-        xaxis_title='Time',
-        yaxis_title='Temperature (°C)',
-        template='plotly_dark'
-    )
-    
-    return fig.to_html(full_html=False)
-
-def create_humidity_plot(df):
-    """Create humidity visualization."""
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'],
-        y=df['humidity'],
-        mode='lines+markers',
-        name='Current Humidity (%)'
-    ))
-    
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'],
-        y=df['target_humidity'],
-        mode='lines+markers',
-        name='Target Humidity (%)'
-    ))
-    
-    fig.update_layout(
-        title='Humidity Over Time',
-        xaxis_title='Time',
-        yaxis_title='Humidity (%)',
-        template='plotly_dark'
-    )
-    
-    return fig.to_html(full_html=False)
-
-def create_mode_plot(df):
-    """Create mode visualization."""
-    fig = go.Figure()
-    
-    # Count modes over time
-    mode_counts = df.groupby(['timestamp', 'mode']).size().unstack(fill_value=0)
-    
-    for mode in mode_counts.columns:
-        fig.add_trace(go.Scatter(
-            x=mode_counts.index,
-            y=mode_counts[mode],
-            mode='lines+markers',
-            name=mode
-        ))
-    
-    fig.update_layout(
-        title='Device Mode Over Time',
-        xaxis_title='Time',
-        yaxis_title='Count',
-        template='plotly_dark'
-    )
-    
-    return fig.to_html(full_html=False)
+def prepare_chart_data(df):
+    """Prepare data for charts."""
+    try:
+        # Create a copy of the dataframe first
+        df = df.copy()
+        
+        # Get last 24 readings
+        df = df.tail(24).reset_index(drop=True)
+        print(f"\nPreparing chart data:")
+        print(f"Number of data points: {len(df)}")
+        
+        # Convert timestamps to datetime
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        
+        # Format timestamps for display
+        df['time'] = df['timestamp'].dt.strftime('%H:%M')
+        
+        # If there are duplicate timestamps, keep the last value for each timestamp
+        df = df.drop_duplicates(subset=['time'], keep='last')
+        
+        print("\nTemperature data:")
+        print(df[['time', 'temperature']].head())
+        print("\nHumidity data:")
+        print(df[['time', 'humidity']].head())
+        
+        # Prepare data for charts - using simple arrays
+        chart_data = {
+            'labels': df['time'].tolist(),
+            'temperature': df['temperature'].tolist(),
+            'humidity': df['humidity'].tolist()
+        }
+        
+        print("\nFinal chart data:")
+        print(f"Number of labels: {len(chart_data['labels'])}")
+        print(f"Sample labels: {chart_data['labels'][:5]}")
+        print(f"Sample temperature: {chart_data['temperature'][:5]}")
+        print(f"Sample humidity: {chart_data['humidity'][:5]}")
+        
+        return chart_data
+    except Exception as e:
+        print(f"Error preparing chart data: {e}")
+        return {'labels': [], 'temperature': [], 'humidity': []}
 
 @app.route('/')
 def index():
-    """Render the main dashboard."""
+    """Display weather data dashboard."""
     df = load_data()
     
-    # Get latest readings
-    latest = df.iloc[-1] if not df.empty else None
+    if df.empty:
+        print("No data available")
+        return render_template('index.html',
+                             latest=None,
+                             temperature_data=[],
+                             humidity_data=[],
+                             chart_data={'labels': [], 'temperature': [], 'humidity': []},
+                             has_data=False)
     
-    # Create visualizations
-    temp_plot = create_temperature_plot(df)
-    humidity_plot = create_humidity_plot(df)
-    mode_plot = create_mode_plot(df)
+    # Get latest readings
+    latest = df.iloc[-1].to_dict()
+    print(f"Latest reading: {latest}")
+    
+    # Prepare data for charts
+    chart_data = prepare_chart_data(df)
     
     return render_template('index.html',
                          latest=latest,
-                         temp_plot=temp_plot,
-                         humidity_plot=humidity_plot,
-                         mode_plot=mode_plot)
+                         temperature_data=json.dumps(chart_data['temperature']),
+                         humidity_data=json.dumps(chart_data['humidity']),
+                         chart_data=chart_data,
+                         has_data=True)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(debug=True, host='0.0.0.0') 
